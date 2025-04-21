@@ -83,19 +83,19 @@ class GameTemplate extends FlameGame
     await FlameAudio.audioCache.loadAll(['ball.wav', 'explosion.wav']);
   }
 
-  void registrarGolpe() {
-    golpes++;
-    puntos -= 20;
-    puntosTexto.text = 'Puntos: $puntos';
+void registrarGolpe() {
+  golpes++;
+  puntos -= 20;
+  puntosTexto.text = 'Puntos: $puntos';
 
-    if (golpes <= 4 && golpes > 0) {
-      remove(corazones[5 - golpes]);
-    }
-
-    if (golpes > 4 || intentosRestantes <= 0) {
-      terminarJuego();
-    }
+  if (golpes <= 5 && golpes > 0) {
+    remove(corazones[5 - golpes]);
   }
+
+  if (golpes > 4 || intentosRestantes <= 0) {
+    terminarJuego();
+  }
+}
 
   void registrarIntento() {
     intentosRestantes--;
