@@ -48,26 +48,28 @@ class GameTemplate extends FlameGame
 
    
 
-    puntosTexto = TextComponent(
+       puntosTexto = TextComponent(
       text: 'Puntos: $puntos',
-      position: Vector2(campoJuego.left, campoJuego.top - 30),
+      position: Vector2(campoJuego.left, campoJuego.top - 70),
       anchor: Anchor.topLeft,
       textRenderer: TextPaint(
         style: const TextStyle(fontSize: 18, color: Colors.white),
       ),
     );
     add(puntosTexto);
-     final heartSprite = await loadSprite('hearth.png');
+
+    final heartSprite = await loadSprite('hearth.png');
     for (int i = 0; i < 5; i++) {
       final heart = SpriteComponent(
         sprite: heartSprite,
         size: Vector2(24, 24),
-        position: Vector2(campoJuego.left + i * 28, campoJuego.top - 60),
+        position: Vector2(campoJuego.left + i * 28, campoJuego.top - 40),
         anchor: Anchor.topLeft,
       );
       corazones.add(heart);
       add(heart);
     }
+
 
     shipPlayer = Ship(await loadSprite('triangle.png'), campoJuego);
     add(shipPlayer);
@@ -86,7 +88,7 @@ class GameTemplate extends FlameGame
     puntos -= 20;
     puntosTexto.text = 'Puntos: $puntos';
 
-    if (golpes <= 5 && golpes > 0) {
+    if (golpes <= 4 && golpes > 0) {
       remove(corazones[5 - golpes]);
     }
 
