@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
+import 'package:flame/input.dart'; // necesario para Tappable
 import 'package:flame/flame.dart';
 import 'package:flame/game.dart';
 import 'package:flame_audio/flame_audio.dart';
@@ -18,8 +19,10 @@ class GameTemplate extends FlameGame
     with HasKeyboardHandlerComponents, HasCollisionDetection {
   late Ship shipPlayer;
   List<Square> squareEnemies = [];
+  List<SpriteComponent> corazones = [];
   late Rect campoJuego;
   late RectangleComponent campoRojo;
+  late TextComponent puntosTexto;
 
   int puntos = 100;
   int golpes = 0;
@@ -30,11 +33,10 @@ class GameTemplate extends FlameGame
   Future<void> onLoad() async {
     super.onLoad();
 
-    // 60% del tamaño de la pantalla centrado
-    final double ancho = size.x * 0.4;
-    final double alto = size.y * 0.8;
-    final double left = (size.x - ancho) / 2;
-    final double top = (size.y - alto) / 2;
+    final ancho = size.x * 0.4;
+    final alto = size.y * 0.8;
+    final left = (size.x - ancho) / 2;
+    final top = (size.y - alto) / 2;
     campoJuego = Rect.fromLTWH(left, top, ancho, alto);
 
     campoRojo = RectangleComponent(
@@ -43,6 +45,29 @@ class GameTemplate extends FlameGame
       paint: Paint()..color = Colors.blue.withOpacity(0.3),
     );
     add(campoRojo);
+
+   
+
+    puntosTexto = TextComponent(
+      text: 'Puntos: $puntos',
+      position: Vector2(campoJuego.left, campoJuego.top - 30),
+      anchor: Anchor.topLeft,
+      textRenderer: TextPaint(
+        style: const TextStyle(fontSize: 18, color: Colors.white),
+      ),
+    );
+    add(puntosTexto);
+     final heartSprite = await loadSprite('hearth.png');
+    for (int i = 0; i < 5; i++) {
+      final heart = SpriteComponent(
+        sprite: heartSprite,
+        size: Vector2(24, 24),
+        position: Vector2(campoJuego.left + i * 28, campoJuego.top - 60),
+        anchor: Anchor.topLeft,
+      );
+      corazones.add(heart);
+      add(heart);
+    }
 
     shipPlayer = Ship(await loadSprite('triangle.png'), campoJuego);
     add(shipPlayer);
@@ -59,6 +84,12 @@ class GameTemplate extends FlameGame
   void registrarGolpe() {
     golpes++;
     puntos -= 20;
+    puntosTexto.text = 'Puntos: $puntos';
+
+    if (golpes <= 5 && golpes > 0) {
+      remove(corazones[5 - golpes]);
+    }
+
     if (golpes > 4 || intentosRestantes <= 0) {
       terminarJuego();
     }
@@ -66,6 +97,8 @@ class GameTemplate extends FlameGame
 
   void registrarIntento() {
     intentosRestantes--;
+    puntosTexto.text = 'Puntos: $puntos';
+
     if (golpes > 5 || intentosRestantes <= 0) {
       terminarJuego();
     }
@@ -73,6 +106,7 @@ class GameTemplate extends FlameGame
 
   void terminarJuego() {
     juegoTerminado = true;
+
     add(TextComponent(
       text: """
 Juego terminado
@@ -80,24 +114,72 @@ Golpes: $golpes
 Puntos: $puntos
 Estado: ${_estadoFinal()}
 """,
-      position: size / 2,
+      position: size / 2 - Vector2(0, 40),
       anchor: Anchor.center,
       textRenderer: TextPaint(
         style: const TextStyle(fontSize: 24, color: Colors.white),
       ),
     ));
+
+    add(BotonReinicio());
   }
 
-  String _estadoFinal() {
-    if (puntos > 60) return "Buen desempeño";
-    if (puntos > 20) return "Desempeño regular";
-    return "Desempeño pobre";
+  void reiniciarJuego() async {
+    puntos = 100;
+    golpes = 0;
+    intentosRestantes = 30;
+    juegoTerminado = false;
+
+    children.where((c) => c is! CameraComponent).toList().forEach(remove);
+    await onLoad();
+  }
+
+ String _estadoFinal() {
+  switch (puntos) {
+    case 100:
+      return "No te tocó ni el aire, excelente.";
+    case 80:
+      return "Muy bien jugado, casi perfecto.";
+    case 60:
+      return "Buena partida, se nota práctica.";
+    case 40:
+      return "Te defendiste, pero te faltó poco.";
+    case 20:
+      return "Llegaste raspando... cuidado.";
+    default:
+      return "No sirves para esto.";
   }
 }
 
+}
+
+class BotonReinicio extends TextComponent
+    with TapCallbacks, GestureHitboxes, HasGameRef<GameTemplate> {
+  BotonReinicio()
+      : super(
+          text: "[ Volver a jugar ]",
+          anchor: Anchor.center,
+          textRenderer: TextPaint(
+            style: const TextStyle(fontSize: 18, color: Colors.lightBlue),
+          ),
+        );
+
+  @override
+  Future<void> onLoad() async {
+    position = gameRef.size / 2 + Vector2(0, 30);
+    add(RectangleHitbox()); // Para detectar el clic
+  }
+
+  @override
+  void onTapDown(TapDownEvent event) {
+    gameRef.reiniciarJuego();
+  }
+}
+
+
 class Ship extends SpriteComponent
     with HasGameReference<GameTemplate>, CollisionCallbacks {
-  final double velocidad = 200;
+  final double velocidad = 300;
   final Rect campo;
   bool leftPressed = false;
   bool rightPressed = false;

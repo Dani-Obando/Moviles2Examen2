@@ -65,6 +65,7 @@ flutter:
     - assets/images/square.png
     - assets/audio/ball.wav
     - assets/audio/explosion.wav
+    - assets/images/hearth.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
